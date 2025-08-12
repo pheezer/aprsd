@@ -2,8 +2,8 @@ FROM ghcr.io/astral-sh/uv:python3.11-alpine AS build
 
 ARG VERSION=3.5.0
 # pass this in as 'dev' if you want to install from github repo vs pypi
-ARG INSTALL_TYPE=pypi
-
+ARG INSTALL_TYPE=github
+ARG INSTALL_APRS_PLUGINS=true
 ARG BRANCH=master
 ARG BUILDX_QEMU_ENV
 
@@ -54,20 +54,36 @@ RUN uv pip install -U pip
 RUN if [ "$INSTALL_TYPE" = "pypi" ]; then \
        uv pip install aprsd==$APRSD_PIP_VERSION; \
     elif [ "$INSTALL_TYPE" = "github" ]; then \
-       git clone -b $APRSD_BRANCH https://github.com/craigerl/aprsd; \
+       git clone -b $APRSD_BRANCH https://github.com/pheezer/aprsd; \
        ls -al /app/aprsd; \
-       uv pip install /app/aprsd; \
+       uv pip install /app/aprsd;\
        ls -al /app/.venv/lib/python3.11/site-packages/aprsd*; \
     fi
+# Install plugins
+
+RUN if [ "$INSTALL_APRS_PLUGINS" = "true" ]; then \
+       apk add gcc musl-dev py3-setuptools; \
+       uv pip install -U aprsd-assistant-plugin; \
+    fi
+
 # RUN uv pip install gevent uwsgi
 RUN echo "PATH=\$PATH:/usr/games:/app/.local/bin" >> /app/.bashrc
 #RUN which aprsd
-RUN uv run aprsd sample-config > /config/aprsd.conf
+
+COPY aprsd.conf* /config/aprsd.conf;
+
+RUN if [ -f /config/aprsd.conf ]; then \
+       echo "Using provided aprsd.conf"; \
+    else \
+       echo "No aprsd.conf found, generating sample config."; \
+       uv run aprsd sample-config > /config/aprsd.conf; \
+    fi
+
 RUN uv run aprsd --version
 
 
 FROM ghcr.io/astral-sh/uv:python3.11-alpine
-RUN apk add fortune bash git
+RUN apk add fortune bash git 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 COPY --from=install /app /app
 COPY --from=install /config config
