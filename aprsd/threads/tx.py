@@ -263,7 +263,7 @@ class BeaconSendThread(aprsd_threads.APRSDThread):
                 to_call='APRS',
                 latitude=float(CONF.latitude),
                 longitude=float(CONF.longitude),
-                comment='APRSD GPS Beacon',
+                comment=CONF.comment,
                 symbol=CONF.beacon_symbol,
             )
             try:

@@ -78,6 +78,11 @@ aprsd_opts = [
         help='The symbol to use for the GPS Beacon packet. See: http://www.aprs.net/vm/DOS/SYMBOLS.HTM',
     ),
     cfg.StrOpt(
+        'comment',
+        default='APRSD GPS Beacon',
+        help='Comment to use for the beacon packet.',
+    ),
+    cfg.StrOpt(
         'latitude',
         default=None,
         help='Latitude for the GPS Beacon button.  If not set, the button will not be enabled.',
